@@ -9,7 +9,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from ingest import build_knowledge_base
 from src.agent import KnowledgeBaseAgent
-from src.chunking import DocumentStructuredChunker, FixedSizeChunker, RecursiveChunker
+from src.chunking import DocumentStructuredChunker, FixedSizeChunker, ParentChildChunker, RecursiveChunker
 from src.embeddings import OPENAI_EMBEDDING_MODEL, OpenAIEmbedder
 
 
@@ -45,7 +45,7 @@ def make_openai_llm(model: str, max_tokens: int):
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-dir", default="data/k4_ecommerce_crawled")
-    parser.add_argument("--strategy", choices=("document_structured", "recursive", "fixed"), default="document_structured")
+    parser.add_argument("--strategy", choices=("document_structured", "parent_child", "semantic", "recursive", "fixed"), default="document_structured")
     parser.add_argument("--chunk-size", type=int, default=400)
     parser.add_argument("--output", type=Path, default=Path("bench_results.txt"))
     parser.add_argument("--embedding-model", default=None)
@@ -61,6 +61,12 @@ def main() -> int:
 
     if args.strategy == "document_structured":
         chunker = DocumentStructuredChunker(chunk_size=args.chunk_size)
+    elif args.strategy == "parent_child":
+        chunker = ParentChildChunker(
+            parent_chunk_size=args.chunk_size * 3,
+            child_chunk_size=args.chunk_size,
+            child_overlap=min(50, args.chunk_size // 4),
+        )
     elif args.strategy == "fixed":
         chunker = FixedSizeChunker(chunk_size=args.chunk_size, overlap=min(50, args.chunk_size // 4))
     else:

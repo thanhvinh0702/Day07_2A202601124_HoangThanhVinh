@@ -201,8 +201,8 @@ class ParentChildChunker:
     Split text into large parent chunks, then split each parent into smaller child chunks.
 
     Rules:
-        - Text is first split into parent chunks via RecursiveChunker(chunk_size=parent_chunk_size).
-        - Each parent is then split into child chunks via FixedSizeChunker(chunk_size=child_chunk_size, overlap=child_overlap).
+        - Text is first split into parent chunks via DocumentStructuredChunker(parent_chunk_size).
+        - Each parent is then split into child chunks via RecursiveChunker(child_chunk_size).
         - Each child keeps a reference to its parent (parent_id, parent_text) so retrieval can
           search over the smaller, more precise children while returning the fuller parent
           context for generation.
@@ -218,8 +218,8 @@ class ParentChildChunker:
         self.parent_chunk_size = parent_chunk_size
         self.child_chunk_size = child_chunk_size
         self.child_overlap = child_overlap
-        self._parent_splitter = RecursiveChunker(chunk_size=parent_chunk_size)
-        self._child_splitter = FixedSizeChunker(chunk_size=child_chunk_size, overlap=child_overlap)
+        self._parent_splitter = DocumentStructuredChunker(parent_chunk_size)
+        self._child_splitter = RecursiveChunker(chunk_size=child_chunk_size)
 
     def chunk(self, text: str) -> list[dict]:
         if not text:

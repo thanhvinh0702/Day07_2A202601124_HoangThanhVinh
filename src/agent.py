@@ -26,7 +26,8 @@ class KnowledgeBaseAgent:
         records_text = ""
         for i, record in enumerate(records):
             records_text += f"[{i}] doc_id: {record["id"]} " 
-            records_text += f"{record["content"]} "
+            context = record["metadata"].get("parent_context", record["content"])
+            records_text += f"{context} "
         prompt = f"""
         Instruction: chỉ dùng context; nói rõ khi context không đủ.\n
         Context: {records_text}\n

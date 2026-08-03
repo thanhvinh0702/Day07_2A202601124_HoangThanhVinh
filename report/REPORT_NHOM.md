@@ -132,7 +132,7 @@ Kết quả mới nhất được lưu tại [`bench_results_document_structured
 
 ### So sánh A/B giữa hai strategy và kiểm tra bằng chứng ở mức chunk
 
-Hai file [`bench_results_recursive.txt`](../bench_results_recursive.txt) và [`bench_results_document_structured.txt`](../bench_results_document_structured.txt) dùng cùng corpus, 5 query, embedding thật `openrouter/openai/text-embedding-3-small` và LLM `openrouter/deepseek/deepseek-v4-flash`; chỉ thay chunker.
+Ba file [`bench_results_recursive.txt`](../bench_results_recursive.txt), [`bench_results_document_structured.txt`](../bench_results_document_structured.txt) và [`bench_results.txt`](../bench_results.txt) dùng cùng corpus, 5 query, embedding thật `openrouter/openai/text-embedding-3-small` và LLM `openrouter/deepseek/deepseek-v4-flash`; chỉ thay chunker.
 
 #### Kết quả riêng — RecursiveChunker (`chunk_size=400`)
 
@@ -156,6 +156,30 @@ Hai file [`bench_results_recursive.txt`](../bench_results_recursive.txt) và [`b
 | Q5 | `chunk_14` (0.7818), `chunk_11` (0.7760), `chunk_13` (0.7719) | Có — `không được yêu cầu hủy một phần` trong chunk 11 | Trả lời đúng ngoại lệ | 2/2 |
 | **Tổng** | **669 chunks** | **Q1, Q3, Q5 đầy đủ; Q4 một phần** | | **7/10** |
 
+#### Kết quả riêng — ParentChildChunker (parent=1200, child=400, overlap=50; có parent context)
+
+| Query | Top-3 chunk và score | Có chuỗi bằng chứng? | Agent | Điểm |
+|---|---|---|---|---:|
+| Q1 | `chunk_18` (0.7570), `chunk_19` (0.7006), `chunk_25` (0.6857) | Có — `15 ngày` trong chunk 18 | Trả lời đúng 15 ngày | 2/2 |
+| Q2 | `tiktok-logistics-terms::chunk_87` (0.7012), `tiktok-prohibited-products::chunk_6` (0.6819), `tiktok-logistics-terms::chunk_89` (0.6801) | Không — không có điều kiện hủy cụ thể | Báo context không đủ | 0/2 |
+| Q3 | `chunk_27` (0.7781), `chunk_28` (0.7574), `chunk_26` (0.7536) | Không — top-3 không có `48 giờ` | Báo context không đủ | 0/2 |
+| Q4, filter `customer_role=creator` | `chunk_14` (0.5593), `chunk_7` (0.5453), `chunk_17` (0.5437) | Có — chunk 7 chứa danh sách biện pháp | Agent liệt kê được 7 biện pháp, grounded | 2/2 |
+| Q5 | `chunk_9` (0.7760), `chunk_59` (0.7529), `chunk_10` (0.6428) | Có — section 3.2.1 và điều kiện hủy một phần | Trả lời đúng ngoại lệ | 2/2 |
+| **Tổng** | **642 chunks** | **Q1, Q4, Q5 đầy đủ** | | **6/10** |
+
+#### Kết quả riêng — SemanticChunker (`max_chunk_size=400`)
+
+| Query | Top-3 chunk và score | Có chuỗi bằng chứng? | Agent | Điểm |
+|---|---|---|---|---:|
+| Q1 | top-1 (0.8147), top-2 (0.7444), top-3 (0.7148) | Có — `15 ngày` ở top-1 | Trả lời đúng | 2/2 |
+| Q2 | top-1 (0.7086), top-2 (0.6985), top-3 (0.6921) | Không — không có điều kiện trước `Đã vận chuyển` | Báo context không đủ | 0/2 |
+| Q3 | top-1 (0.8343), top-2 (0.7790), top-3 (0.7730) | Có — `48 giờ` ở top-1 | Trả lời đúng | 2/2 |
+| Q4, filter `customer_role=creator` | top-1 (0.6175), top-2 (0.5952), top-3 (0.5502) | Có một phần — chỉ thấy hành động thực thi/đóng băng hoa hồng | Trả lời một phần, chưa liệt kê đủ | 1/2 |
+| Q5 | top-1 (0.7811), top-2 (0.7529), top-3 (0.7527) | Có — `không được yêu cầu hủy một phần` ở top-1 | Trả lời đúng | 2/2 |
+| **Tổng** | **1.584 chunks** | **Q1, Q3, Q5 đầy đủ; Q4 một phần** | | **7/10** |
+
+Lưu ý: `bench.py --strategy semantic` hiện dùng fallback token-overlap để chia câu vì chưa truyền embedding function vào chunker; embedding thật vẫn được dùng ở bước retrieval.
+
 | Query | RecursiveChunker (6.973 chunks) | DocumentStructuredChunker (638 chunks) | Bằng chứng đặc trưng cần có trong top-3 |
 |---|---|---|---|
 | Q1 | 2/2 — top-1 có “trong vòng 15 ngày”, agent đúng | 2/2 — chunk 23 có “trong vòng 15 ngày”, agent đúng | `15 ngày` |
@@ -165,9 +189,18 @@ Hai file [`bench_results_recursive.txt`](../bench_results_recursive.txt) và [`b
 | Q5 | 2/2 — chunk 27 có “không được yêu cầu hủy một phần”, agent đúng | 2/2 — chunk 11 có cùng bằng chứng, agent đúng | `không được yêu cầu hủy một phần` |
 | **Tổng** | **6/10** | **7/10** | |
 
+| Strategy | Số chunks | Có bằng chứng đầy đủ trong top-3 | Điểm |
+|---|---:|---:|---:|
+| RecursiveChunker | 6.973 | 3/5 | 6/10 |
+| DocumentStructuredChunker | 669 | 3/5 đầy đủ + Q4 một phần | 7/10 |
+| ParentChildChunker | 642 | 3/5 đầy đủ (Q1, Q4, Q5) | 6/10 |
+| SemanticChunker | 1.584 | 3/5 đầy đủ + Q4 một phần | 7/10 |
+
 **Failure case 1 — Q2:** RecursiveChunker top-3 có cùng `doc_id` nhưng chỉ chứa tiêu đề “Chính sách hủy đơn hàng...” (score 0.7575, 0.7575, 0.7245). Sau khi nhận diện thêm heading dạng đánh số, DocumentStructuredChunker vẫn bị các chunk logistics/mở đầu cạnh tranh (0.7316, 0.7146, 0.7091), nên không lấy được section 3.1. Đây là lỗi precision ở mức chunk: đúng chủ đề nhưng sai section.
 
 **Failure case 2 — Q4 với DocumentStructuredChunker:** filter `customer_role=creator` giảm nhiễu đúng đối tượng, nhưng top-3 chỉ chứa hai biện pháp và agent không liệt kê toàn bộ danh sách gold. Filter cải thiện precision tài liệu nhưng không bảo đảm recall của mọi chunk trong section “Hành động thực thi”.
+
+**Failure case 3 — Q3 với ParentChildChunker:** parent context giúp Q4 lấy được cả section “Hành động thực thi”, nhưng Q3 lại có top-3 là các chunk 4.2.1/4.2.2 (score 0.7781, 0.7574, 0.7536), không chứa chuỗi `48 giờ`. Parent context chỉ có ích sau khi child đúng được xếp hạng; cần tăng child overlap hoặc rerank bằng lexical evidence để câu trả lời định lượng không bị bỏ sót.
 
 **A/B filter:** Hai file hiện có kết quả Q4 ở nhánh **có filter**. Nhánh không filter chưa được ghi riêng trong output, vì vậy không kết luận rằng filter làm thay đổi thứ hạng; cần chạy lại Q4 với `metadata_filter=None` và giữ nguyên strategy/embedder để hoàn tất phép A/B.
 

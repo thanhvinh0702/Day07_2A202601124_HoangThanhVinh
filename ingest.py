@@ -105,8 +105,14 @@ def chunk_document(doc: Document, chunker) -> list[Document]:
         chunk_meta = dict(doc.metadata)
         chunk_meta["doc_id"] = doc.id           # để delete_document()/lọc theo doc_id hoạt động
         chunk_meta["chunk_index"] = index
+        if isinstance(piece, dict):
+            content = str(piece.get("child_text", ""))
+            chunk_meta["parent_id"] = piece.get("parent_id", index)
+            chunk_meta["parent_context"] = str(piece.get("parent_text", ""))
+        else:
+            content = piece
         chunk_docs.append(
-            Document(id=f"{doc.id}::chunk_{index}", content=piece, metadata=chunk_meta)
+            Document(id=f"{doc.id}::chunk_{index}", content=content, metadata=chunk_meta)
         )
     return chunk_docs
 
