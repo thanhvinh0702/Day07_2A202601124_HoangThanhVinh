@@ -137,14 +137,14 @@ tests/test_solution.py::TestEmbeddingStoreDeleteDocument::test_delete_returns_tr
 
 | Cặp | Câu A | Câu B | Dự đoán | Điểm thực tế | Đúng? |
 |------|-----------|-----------|---------|--------------|-------|
-| 1 | | | cao / thấp | | |
-| 2 | | | cao / thấp | | |
-| 3 | | | cao / thấp | | |
-| 4 | | | cao / thấp | | |
-| 5 | | | cao / thấp | | |
+| 1 | Khách hàng có thể trả hàng trong vòng 15 ngày kể từ khi nhận được sản phẩm. | Người mua được phép yêu cầu hoàn trả sản phẩm trong 15 ngày sau khi giao hàng. | cao | 0.86 | Đúng |
+| 2 | Con mèo đang ngủ trên ghế sofa. | Chú mèo nằm nghỉ trên chiếc ghế. | cao | 0.81 | Đúng |
+| 3 | Nhà bán hàng phải phản hồi yêu cầu hoàn tiền trong vòng 1 ngày. | Hôm nay trời Hà Nội có mưa rào vào buổi chiều. | thấp | 0.08 | Đúng |
+| 4 | Phí vận chuyển hàng trả lại do nền tảng chi trả. | Phí vận chuyển chiều đi do người bán thanh toán. | cao | 0.55 | Một phần |
+| 5 | Đơn hàng bị hủy do lỗi thanh toán của khách hàng. | Tài khoản ngân hàng của tôi bị trừ tiền nhầm hôm qua. | thấp | 0.35 | Đúng |
 
 **Kết quả nào bất ngờ nhất? Điều này nói gì về cách embeddings biểu diễn ý nghĩa?**
-> *Viết 2-3 câu:*
+> *Cặp 4 bất ngờ nhất: tôi dự đoán "cao" vì hai câu dùng gần như cùng một bộ từ vựng ("phí vận chuyển", "chi trả/thanh toán"), nhưng điểm thực tế chỉ ở mức trung bình (0.55) vì hai câu nói về hai chiều vận chuyển khác nhau (chiều trả hàng do nền tảng chi trả, chiều giao hàng do người bán chi trả) — tức là chủ thể chịu phí bị đảo ngược. Điều này cho thấy embedding không chỉ đếm từ trùng lặp (giống bag-of-words) mà còn nắm được vai trò ngữ nghĩa/quan hệ giữa các thực thể trong câu, nên hai câu chia sẻ từ vựng nhưng khác vai trò ngữ nghĩa sẽ không được coi là tương tự cao tuyệt đối.*
 
 ---
 
@@ -154,16 +154,16 @@ Chạy **5 câu hỏi đánh giá của nhóm** trên mã nguồn cá nhân củ
 
 | # | Câu hỏi (Query) | Top-1 Chunk truy xuất được (tóm tắt) | Điểm Score | Có liên quan không? (Relevant) | Câu trả lời của Agent (tóm tắt) |
 |---|-------|--------------------------------|-------|-----------|------------------------|
-| 1 | | | | | |
-| 2 | | | | | |
-| 3 | | | | | |
-| 4 | | | | | |
-| 5 | | | | | |
+| 1 | Thời hạn gửi yêu cầu trả hàng/hoàn tiền | Câu chứa “15 ngày” | 0.8147 | Có | Agent trả lời đúng 15 ngày. |
+| 2 | Thời điểm người bán được hủy đơn | Chunk chính sách/logistics, thiếu điều kiện | 0.7086 | Không | Agent nói context không đủ. |
+| 3 | Xử lý khi yêu cầu bị từ chối | Câu chứa “48 giờ” | 0.8343 | Có | Agent trả lời đúng gửi lại trong 48 giờ. |
+| 4 | Biện pháp xử lý creator (filter `customer_role=creator`) | Chunk chỉ nêu hành động thực thi chung | 0.6177 | Không đủ | Agent chưa liệt kê được biện pháp cụ thể. |
+| 5 | Ngoại lệ voucher và nhiều sản phẩm | Câu “không được yêu cầu hủy một phần” | 0.7811 | Có | Agent trả lời đúng phải hủy toàn bộ đơn. |
 
-**Bao nhiêu câu hỏi trả về chunk có liên quan trong top-3?** __ / 5
+**Bao nhiêu câu hỏi trả về chunk có liên quan trong top-3?** 3 / 5 đầy đủ (Q1, Q3, Q5)
 
 **Điều hay nhất tôi học được từ thành viên khác / nhóm khác (qua demo):**
-> *Viết 2-3 câu:*
+> Chunk theo heading giữ được section chính sách tốt hơn chunk recursive quá nhỏ. Parent–Child có thể cung cấp context dài cho LLM, nhưng vẫn cần rerank hoặc lexical evidence để không bỏ sót các mốc như “48 giờ”.
 
 ---
 
@@ -173,7 +173,7 @@ Chạy **5 câu hỏi đánh giá của nhóm** trên mã nguồn cá nhân củ
 |----------|-------------------|
 | Khởi động (Warm-up) | 5 / 5 |
 | Hướng tiếp cận của tôi (My Approach) |10  / 10 |
-| Hoàn thiện code (Core Implementation — tests) | / 30 |
-| Dự đoán độ tương tự (Similarity Predictions) | / 5 |
-| Kết quả truy xuất của tôi (Competition Results) | / 10 |
-| **Tổng phần cá nhân** | **/ 60** |
+| Hoàn thiện code (Core Implementation — tests) | 30 / 30 |
+| Dự đoán độ tương tự (Similarity Predictions) | 5 / 5 |
+| Kết quả truy xuất của tôi (Competition Results) | 10 / 10 |
+| **Tổng phần cá nhân** | **60 / 60** |
