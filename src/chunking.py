@@ -109,7 +109,11 @@ class DocumentStructuredChunker:
     every child chunk so later chunks do not lose their document context.
     """
 
-    HEADING_RE = re.compile(r"(?m)^#{1,6}\s+.+$" )
+    # Supports Markdown headings and flattened article headings such as
+    # ``3.2.1 Đơn hàng sử dụng voucher...`` produced by the HTML fetcher.
+    HEADING_RE = re.compile(
+        r"(?m)^(?:#{1,6}\s+.+|\d+(?:\.\d+){0,5}\s+[^\n]+)$"
+    )
 
     def __init__(self, chunk_size: int = 500) -> None:
         self.chunk_size = max(1, chunk_size)
