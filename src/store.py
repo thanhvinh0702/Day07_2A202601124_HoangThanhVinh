@@ -37,14 +37,14 @@ class EmbeddingStore:
             self._use_chroma = False
             self._collection = None
 
-    def _make_record(self, doc: Document) -> dict[str, Any]:
+    def _make_record(self, doc: Document, embedding: list[float] | None = None) -> dict[str, Any]:
         metadata = dict(doc.metadata)
         metadata.setdefault("doc_id", doc.id)
         record = {
             "id": f"{doc.id}::{self._next_index}",
             "content": doc.content,
             "metadata": metadata,
-            "embedding": self._embedding_fn(doc.content),
+            "embedding": embedding if embedding is not None else self._embedding_fn(doc.content),
         }
         self._next_index += 1
         return record
@@ -68,15 +68,24 @@ class EmbeddingStore:
             for score, record in nlargest(top_k, scored, key=lambda item: item[0])
         ]
 
-    def add_documents(self, docs: list[Document]) -> None:
+    def add_documents(
+        self,
+        docs: list[Document],
+        embeddings: list[list[float]] | None = None,
+    ) -> None:
         """
         Embed each document's content and store it.
 
         For ChromaDB: use collection.add(ids=[...], documents=[...], embeddings=[...])
         For in-memory: append dicts to self._store
         """
-        for doc in docs:
-            record = self._make_record(doc=doc)
+        if embeddings is not None and len(embeddings) != len(docs):
+            raise ValueError("embeddings must match docs length")
+        for index, doc in enumerate(docs):
+            record = self._make_record(
+                doc=doc,
+                embedding=embeddings[index] if embeddings is not None else None,
+            )
             self._store.append(record)
 
     def search(self, query: str, top_k: int = 5) -> list[dict[str, Any]]:

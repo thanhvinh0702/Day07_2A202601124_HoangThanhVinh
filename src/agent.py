@@ -17,8 +17,12 @@ class KnowledgeBaseAgent:
         self.store = store
         self.llm_fn = llm_fn
 
-    def answer(self, question: str, top_k: int = 3) -> str:
-        records = self.store.search(question, top_k=top_k)
+    def answer(self, question: str, top_k: int = 3, metadata_filter: dict | None = None) -> str:
+        records = self.store.search_with_filter(
+            question,
+            top_k=top_k,
+            metadata_filter=metadata_filter,
+        )
         records_text = ""
         for i, record in enumerate(records):
             records_text += f"[{i}] doc_id: {record["id"]} " 

@@ -48,13 +48,19 @@
 
 ### Phân tích đường cơ sở (Baseline Analysis)
 
-Chạy `ChunkingStrategyComparator().compare()` trên 2-3 tài liệu:
+Chạy `ChunkingStrategyComparator().compare()` với `chunk_size=200` trên 3 tài liệu TikTok. Front matter đã được loại bằng `ingest.load_documents()` trước khi so sánh.
 
 | Tài liệu | Chiến lược (Strategy) | Số lượng Chunk | Độ dài trung bình | Giữ được ngữ cảnh không? |
 |-----------|----------|-------------|------------|-------------------|
-| | FixedSizeChunker (`fixed_size`) | | | |
-| | SentenceChunker (`by_sentences`) | | | |
-| | RecursiveChunker (`recursive`) | | | |
+| `tiktok-cancellation-returns-refunds` | FixedSizeChunker (`fixed_size`) | 117 | 198.76 | Tương đối; có thể cắt giữa mục |
+| `tiktok-cancellation-returns-refunds` | SentenceChunker (`by_sentences`) | 41 | 422.95 | Tốt theo câu nhưng vượt ngưỡng 200 |
+| `tiktok-cancellation-returns-refunds` | RecursiveChunker (`recursive`) | 561 | 29.81 | Kém; quá nhiều mảnh ngắn |
+| `tiktok-creator-enforcement-policy` | FixedSizeChunker (`fixed_size`) | 60 | 199.62 | Tương đối; có thể cắt giữa mục |
+| `tiktok-creator-enforcement-policy` | SentenceChunker (`by_sentences`) | 20 | 448.35 | Tốt theo câu nhưng vượt ngưỡng 200 |
+| `tiktok-creator-enforcement-policy` | RecursiveChunker (`recursive`) | 289 | 29.93 | Kém; quá nhiều mảnh ngắn |
+| `tiktok-prohibited-products` | FixedSizeChunker (`fixed_size`) | 172 | 199.95 | Tương đối; có thể cắt giữa mục |
+| `tiktok-prohibited-products` | SentenceChunker (`by_sentences`) | 34 | 757.29 | Giữ câu nhưng quá dài cho retrieval |
+| `tiktok-prohibited-products` | RecursiveChunker (`recursive`) | 698 | 35.56 | Kém; quá nhiều mảnh ngắn |
 
 ### Chiến lược của từng thành viên
 

@@ -116,6 +116,7 @@ def build_knowledge_base(
     embedding_fn: Callable[[str], list[float]],
     chunker=None,
     collection_name: str = "lab7_kb",
+    embedding_batch_fn: Callable[[list[str]], list[list[float]]] | None = None,
 ) -> EmbeddingStore:
     """Đầu-cuối: file -> tài liệu đã parse -> chunk (kèm metadata) -> nạp vào store.
 
@@ -128,7 +129,10 @@ def build_knowledge_base(
         chunk_docs.extend(chunk_document(doc, chunker))
 
     store = EmbeddingStore(collection_name=collection_name, embedding_fn=embedding_fn)
-    store.add_documents(chunk_docs)
+    embeddings = None
+    if embedding_batch_fn is not None:
+        embeddings = embedding_batch_fn([doc.content for doc in chunk_docs])
+    store.add_documents(chunk_docs, embeddings=embeddings)
     return store
 
 
