@@ -191,6 +191,53 @@ def compute_similarity(vec_a: list[float], vec_b: list[float]) -> float:
     return dot / (norm_a_sq * norm_b_sq) if (norm_a_sq * norm_b_sq) else 0.0
 
 
+
+class ParentChildChunker:
+    """
+    Split text into large parent chunks, then split each parent into smaller child chunks.
+
+    Rules:
+        - Text is first split into parent chunks via RecursiveChunker(chunk_size=parent_chunk_size).
+        - Each parent is then split into child chunks via FixedSizeChunker(chunk_size=child_chunk_size, overlap=child_overlap).
+        - Each child keeps a reference to its parent (parent_id, parent_text) so retrieval can
+          search over the smaller, more precise children while returning the fuller parent
+          context for generation.
+        - Returns [] for empty text.
+    """
+
+    def __init__(
+        self,
+        parent_chunk_size: int = 2000,
+        child_chunk_size: int = 400,
+        child_overlap: int = 50,
+    ) -> None:
+        self.parent_chunk_size = parent_chunk_size
+        self.child_chunk_size = child_chunk_size
+        self.child_overlap = child_overlap
+        self._parent_splitter = RecursiveChunker(chunk_size=parent_chunk_size)
+        self._child_splitter = FixedSizeChunker(chunk_size=child_chunk_size, overlap=child_overlap)
+
+    def chunk(self, text: str) -> list[dict]:
+        if not text:
+            return []
+
+        results: list[dict] = []
+        parents = self._parent_splitter.chunk(text)
+        for parent_id, parent_text in enumerate(parents):
+            children = self._child_splitter.chunk(parent_text)
+            for child_id, child_text in enumerate(children):
+                results.append(
+                    {
+                        "parent_id": parent_id,
+                        "parent_text": parent_text,
+                        "child_id": child_id,
+                        "child_text": child_text,
+                    }
+                )
+        return results
+
+
+
 class ChunkingStrategyComparator:
     """Run all built-in chunking strategies and compare their results."""
 
