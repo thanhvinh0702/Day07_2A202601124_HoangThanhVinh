@@ -97,13 +97,15 @@ Chạy `ChunkingStrategyComparator().compare()` trên 2-3 tài liệu:
 
 > **Đúng 5 câu hỏi**, đa dạng, có thể kiểm chứng; **ít nhất 1 câu** cần lọc metadata mới trả lời tốt. Đây là bộ câu hỏi chung cho mọi thành viên chạy.
 
-| # | Câu hỏi (Query) | Câu trả lời chuẩn (Gold Answer) | Chunk nào chứa thông tin? |
-|---|-------|-------------------------------|--------------------------|
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
-| 4 | | | |
-| 5 | | | |
+| # | Dạng | Câu hỏi (Query) | Câu trả lời chuẩn (Gold Answer) | Tài liệu + chunk kỳ vọng |
+|---|---|-------|-------------------------------|--------------------------|
+| 1 | Số liệu | Khách hàng có bao nhiêu ngày để gửi yêu cầu trả hàng/hoàn tiền sau khi đơn được cập nhật là “Đã giao hàng”? | Khách hàng có thể gửi yêu cầu trong vòng **15 ngày** kể từ khi đơn hàng được cập nhật trạng thái “Đã giao hàng”. | `tiktok-cancellation-returns-refunds`, mục 4.1, chunk chứa câu “trong vòng 15 ngày”. |
+| 2 | Điều kiện | Nhà bán hàng có thể hủy đơn hàng TikTok Shop đến thời điểm nào? | Nhà bán hàng có thể hủy đơn **bất kỳ lúc nào trước khi đơn chuyển sang “Đã vận chuyển - Đang vận chuyển”**; việc này ảnh hưởng đến Tỷ lệ hủy do lỗi Người bán. | `tiktok-cancellation-returns-refunds`, mục 3.1, chunk chứa điều kiện hủy bởi Người bán. |
+| 3 | Quy trình | Nếu nhà bán hàng từ chối yêu cầu trả hàng/hoàn tiền, khách hàng cần làm gì và trong bao lâu? | Khách hàng có thể gửi yêu cầu lần thứ hai **trong vòng 48 giờ** sau khi bị từ chối. Nếu không gửi lại trong thời hạn này, nền tảng sẽ đóng yêu cầu. | `tiktok-cancellation-returns-refunds`, mục 4.1, chunk chứa quy trình gửi lại yêu cầu. |
+| 4 | Liệt kê (bắt buộc lọc) | Khi vi phạm chính sách, nền tảng có thể áp dụng những biện pháp nào đối với nhà sáng tạo? | Với tài liệu dành cho `customer_role=creator`, các biện pháp gồm: **gỡ nội dung**, **hạn chế quyền truy cập tính năng sản phẩm**, **tạm dừng kiếm tiền/hoa hồng**; tùy mức độ còn có thể đình chỉ video/LIVE hoặc xóa tài khoản. | `tiktok-creator-enforcement-policy`, mục “What Enforcement Can Look Like”, chunk chứa danh sách biện pháp. **Bắt buộc filter:** `customer_role=creator`. |
+| 5 | Ngoại lệ | Đơn có nhiều sản phẩm và dùng voucher miễn phí vận chuyển có được hủy một phần không? | **Không.** Khách hàng phải hủy toàn bộ đơn. Tuy nhiên, sản phẩm đã sẵn sàng vận chuyển cần người bán chấp nhận, còn sản phẩm chưa sẵn sàng vận chuyển thì yêu cầu hủy được tự động phê duyệt. | `tiktok-cancellation-returns-refunds`, mục 3.2.1, chunk chứa ngoại lệ đơn nhiều sản phẩm + voucher. |
+
+**Quy tắc cố định benchmark:** Đây là đúng 5 query dùng chung cho mọi strategy; không thay đổi câu hỏi sau khi đã chạy thử. Query 4 phải chạy với bộ lọc `customer_role=creator`, vì nếu không lọc, các tài liệu dành cho `seller` cũng có từ vựng “vi phạm/chế tài” và retrieval có thể trả lời sai đối tượng.
 
 ### Tổng hợp chất lượng truy xuất của nhóm
 
