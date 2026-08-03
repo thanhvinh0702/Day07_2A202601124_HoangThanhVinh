@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import re
+from collections.abc import Callable, Sequence
 
 
 class FixedSizeChunker:
@@ -101,6 +102,68 @@ class RecursiveChunker:
         return chunks
 
 
+class SemanticChunker:
+    """Group neighbouring sentences while they remain semantically similar.
+
+    ``embedding_function`` may be supplied as ``Callable[[str], Sequence[float]]``
+    (for example, a sentence-transformer wrapper).  Without one, a small
+    bag-of-words embedding is used so the class remains dependency-free.
+    A new chunk is started when similarity with the current chunk falls below
+    ``similarity_threshold`` or ``max_chunk_size`` would be exceeded.
+    """
+
+    def __init__(
+        self,
+        embedding_function: Callable[[str], Sequence[float]] | None = None,
+        similarity_threshold: float = 0.55,
+        max_chunk_size: int = 500,
+    ) -> None:
+        if max_chunk_size < 1:
+            raise ValueError("max_chunk_size must be positive")
+        self.embedding_function = embedding_function
+        self.similarity_threshold = similarity_threshold
+        self.max_chunk_size = max_chunk_size
+
+    @staticmethod
+    def _fallback_embedding(text: str) -> list[float]:
+        tokens = re.findall(r"\w+", text.lower(), flags=re.UNICODE)
+        counts: dict[str, float] = {}
+        for token in tokens:
+            counts[token] = counts.get(token, 0.0) + 1.0
+        # Stable dimensions are sufficient for comparing two texts locally.
+        return [counts[key] for key in sorted(counts)]
+
+    def _embed(self, text: str) -> Sequence[float]:
+        return self.embedding_function(text) if self.embedding_function else self._fallback_embedding(text)
+
+    def _similarity(self, left: str, right: str) -> float:
+        if self.embedding_function is not None:
+            return compute_similarity(list(self._embed(left)), list(self._embed(right)))
+        left_tokens = set(re.findall(r"\w+", left.lower(), flags=re.UNICODE))
+        right_tokens = set(re.findall(r"\w+", right.lower(), flags=re.UNICODE))
+        if not left_tokens or not right_tokens:
+            return 0.0
+        return len(left_tokens & right_tokens) / len(left_tokens | right_tokens)
+
+    def chunk(self, text: str) -> list[str]:
+        if not text or not text.strip():
+            return []
+        sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+|\n+", text) if s.strip()]
+        chunks: list[str] = []
+        current = sentences[0]
+        for sentence in sentences[1:]:
+            candidate = f"{current} {sentence}"
+            similarity = self._similarity(current, sentence)
+            if len(candidate) <= self.max_chunk_size and similarity >= self.similarity_threshold:
+                current = candidate
+                current_embedding = self._embed(current)
+            else:
+                chunks.append(current)
+                current = sentence
+        chunks.append(current)
+        return chunks
+
+
 def _dot(a: list[float], b: list[float]) -> float:
     return sum(x * y for x, y in zip(a, b))
 
@@ -127,6 +190,7 @@ class ChunkingStrategyComparator:
             "fixed_size": FixedSizeChunker(chunk_size=chunk_size),
             "by_sentences": SentenceChunker(),
             "recursive": RecursiveChunker(chunk_size=chunk_size),
+            "semantic": SemanticChunker(max_chunk_size=chunk_size),
         }
         comparison = {}
         for name, chunker in strategies.items():
