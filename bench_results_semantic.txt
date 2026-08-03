@@ -1,0 +1,73 @@
+strategy=semantic chunk_size=400
+embedding_model=openrouter/openai/text-embedding-3-small llm_model=openrouter/deepseek/deepseek-v4-flash max_tokens=512
+chunks_loaded=1640
+
+Q1 [Số liệu] filter={}: Khách hàng có bao nhiêu ngày để gửi yêu cầu trả hàng/hoàn tiền sau khi đơn được cập nhật là ‘Đã giao hàng’?
+  top-1 score=0.8147 doc_id=tiktok-cancellation-returns-refunds preview=Khách hàng có thể gửi yêu cầu trả hàng/hoàn tiền trong vòng 15 ngày kể từ khi đơn hàng được cập nhật trạng thái "Đã giao hàng".
+  top-2 score=0.7445 doc_id=tiktok-cancellation-returns-refunds preview=Nhà bán hàng cần phản hồi các yêu cầu trả hàng/hoàn tiền trong vòng 1 ngày kể từ khi khách hàng gửi yêu cầu.
+  top-3 score=0.7148 doc_id=tiktok-cancellation-returns-refunds preview=Sau khi yêu cầu trả hàng/hoàn tiền được chấp thuận, khách hàng cần nhập thông tin vận chuyển cần thiết để hoàn trả sản phẩm trong vòng 10 ngày theo lịch.
+  agent: 
+        Instruction: chỉ dùng context; nói rõ khi context không đủ.
+
+        Context: [0] doc_id: tiktok-cancellation-returns-refunds::chunk_56::786 Khách hàng có thể gửi yêu cầu trả hàng/hoàn tiền trong vòng 15 ngày kể từ khi đơn hàng được cập nhật trạng thái "Đã giao hàng". [1] doc_id: tiktok-cancellation-returns-refunds::chunk_72::802 Nhà bán hàng cần phản hồi các yêu cầu trả hàng/hoàn tiền trong vòng 1 ngày kể từ khi khách hàng gửi yêu cầu. [2] doc_id: tiktok-cancellation-returns-refunds::chunk_59::789 Sau khi yêu cầu trả hàng/hoàn tiền được chấp thuận, khách hàng cần nhập thông tin vận chuyển cần thiết để hoàn trả sản phẩm trong vòng 10 ngày theo lịch. 
+
+        Question: Khách hàng có bao nhiêu ngày để gửi yêu cầu trả hàng/hoàn tiền sau khi đơn được cập nhật là ‘Đã giao hàng’?
+
+        Answer:
+        Khách hàng có 15 ngày để gửi yêu cầu trả hàng/hoàn tiền sau khi đơn hàng được cập nhật trạng thái "Đã giao hàng".
+
+Q2 [Điều kiện] filter={}: Nhà bán hàng có thể hủy đơn hàng TikTok Shop đến thời điểm nào?
+  top-1 score=0.7086 doc_id=tiktok-cancellation-returns-refunds preview=# Chính sách hủy đơn hàng trả hàng và hoàn tiền của TikTok Shop Chính sách hủy đơn hàng, trả hàng và hoàn tiền của TikTok Shop Chính sách hủy đơn hàng, trả hàng và hoàn tiền của Ti
+  top-2 score=0.6985 doc_id=tiktok-logistics-terms preview=Bất kể quy định nào khác đi trong Điều Khoản Logistic này, (a) nếu có các đơn đặt hàng đang có hiệu lực giữa Người Bán và Người Mua kể từ ngày chấm dứt Điều Khoản Logistic này, thì
+  top-3 score=0.6921 doc_id=tiktok-prohibited-products preview=TikTok Shop có thể tạm thời hoặc vĩnh viễn đình chỉ hoặc loại bỏ các đặc quyền bán hàng của người bán vi phạm nghiêm trọng hoặc lặp đi lặp lại.
+  agent: 
+        Instruction: chỉ dùng context; nói rõ khi context không đủ.
+
+        Context: [0] doc_id: tiktok-cancellation-returns-refunds::chunk_0::730 # Chính sách hủy đơn hàng trả hàng và hoàn tiền của TikTok Shop Chính sách hủy đơn hàng, trả hàng và hoàn tiền của TikTok Shop Chính sách hủy đơn hàng, trả hàng và hoàn tiền của TikTok Shop [1] doc_id: tiktok-logistics-terms::chunk_177::1203 Bất kể quy định nào khác đi trong Điều Khoản Logistic này, (a) nếu có các đơn đặt hàng đang có hiệu lực giữa Người Bán và Người Mua kể từ ngày chấm dứt Điều Khoản Logistic này, thì Điều Khoản Logistic này sẽ được gia hạn cho đến khi Dịch Vụ Logistic đối với tất cả các đơn đặt hàng như vậy đã được thực hiện, (b) nếu có các đơn đặt hàng đang có hiệu lực giữa Người Bán và Người Mua kể từ ngày tạm ngưng Dịch Vụ Logistic, TikTok sẽ tiếp tục cung cấp Dịch Vụ Logistic cho các đơn đặt hàng như vậy, với điều kiện là các đơn đặt hàng như vậy và việc cung cấp Dịch Vụ Logistic cho các đơn đặt hàng như vậy là không vi phạm Điều Khoản Dịch Vụ Dành Cho Người Bán Trên TikTok Shop (Singapore, Indonesia, Malaysia, Philippines, Việt Nam), Điều Khoản Logistic này, các chính sách hoặc hướng dẫn dành cho TikTok Shop, hoặc pháp luật áp dụng. [2] doc_id: tiktok-prohibited-products::chunk_293::1570 TikTok Shop có thể tạm thời hoặc vĩnh viễn đình chỉ hoặc loại bỏ các đặc quyền bán hàng của người bán vi phạm nghiêm trọng hoặc lặp đi lặp lại. 
+
+        Question: Nhà bán hàng có thể hủy đơn hàng TikTok Shop đến thời điểm nào?
+
+        Answer:
+        Dựa trên context được cung cấp, không có thông tin cụ thể về thời điểm nhà bán hàng có thể hủy đơn hàng TikTok Shop. Context chỉ đề cập đến chính sách hủy đơn hàng, trả hàng và hoàn tiền (chunk_0) nhưng không nêu chi tiết về thời gian hủy. Các chunk khác liên quan đến điều khoản logistics và sản phẩm bị cấm, không cung cấp thông tin cần thiết. Vì vậy, context không đủ để trả lời câu hỏi này.
+
+Q3 [Quy trình] filter={}: Nếu nhà bán hàng từ chối yêu cầu trả hàng/hoàn tiền, khách hàng cần làm gì và trong bao lâu?
+  top-1 score=0.8343 doc_id=tiktok-cancellation-returns-refunds preview=Nếu Nhà bán hàng từ chối yêu cầu trả hàng/hoàn tiền, khách hàng có thể gửi yêu cầu lần thứ hai trong vòng 48 giờ sau khi bị từ chối.
+  top-2 score=0.7790 doc_id=tiktok-cancellation-returns-refunds preview=Nhà bán hàng có thể từ chối yêu cầu trả hàng/hoàn tiền nếu tình trạng sản phẩm hoàn trả không đạt yêu cầu (ví dụ: sản phẩm bị hư hỏng, thiếu sản phẩm, thiếu phụ kiện đi kèm, v.v.).
+  top-3 score=0.7730 doc_id=tiktok-cancellation-returns-refunds preview=Nhà bán hàng không được từ chối yêu cầu trả hàng/hoàn tiền của khách hàng nếu không có lý do chính đáng.
+  agent: 
+        Instruction: chỉ dùng context; nói rõ khi context không đủ.
+
+        Context: [0] doc_id: tiktok-cancellation-returns-refunds::chunk_57::787 Nếu Nhà bán hàng từ chối yêu cầu trả hàng/hoàn tiền, khách hàng có thể gửi yêu cầu lần thứ hai trong vòng 48 giờ sau khi bị từ chối. [1] doc_id: tiktok-cancellation-returns-refunds::chunk_80::810 Nhà bán hàng có thể từ chối yêu cầu trả hàng/hoàn tiền nếu tình trạng sản phẩm hoàn trả không đạt yêu cầu (ví dụ: sản phẩm bị hư hỏng, thiếu sản phẩm, thiếu phụ kiện đi kèm, v.v.). [2] doc_id: tiktok-cancellation-returns-refunds::chunk_82::812 Nhà bán hàng không được từ chối yêu cầu trả hàng/hoàn tiền của khách hàng nếu không có lý do chính đáng. 
+
+        Question: Nếu nhà bán hàng từ chối yêu cầu trả hàng/hoàn tiền, khách hàng cần làm gì và trong bao lâu?
+
+        Answer:
+        Theo thông tin trong context, nếu Nhà bán hàng từ chối yêu cầu trả hàng/hoàn tiền, khách hàng có thể gửi yêu cầu lần thứ hai trong vòng 48 giờ sau khi bị từ chối.
+
+Q4 [Liệt kê] filter={'customer_role': 'creator'}: Khi vi phạm chính sách, nền tảng có thể áp dụng những biện pháp nào đối với nhà sáng tạo?
+  top-1 score=0.6177 doc_id=tiktok-creator-enforcement-policy preview=Khi nhà sáng tạo vi phạm chính sách hoặc không đáp ứng kỳ vọng về hiệu suất, chúng tôi có thể áp dụng hành động thực thi.
+  top-2 score=0.5952 doc_id=tiktok-creator-enforcement-policy preview=Những nhà sáng tạo liên tục vi phạm chính sách của chúng tôi sẽ phải chịu các hành động thực thi, bất kể họ có Điểm tình trạng của nhà sáng tạo ở mức nào.
+  top-3 score=0.5453 doc_id=tiktok-creator-enforcement-policy preview=Nếu một trong những tài khoản này vi phạm các chính sách hoặc tiêu chuẩn cộng đồng của chúng tôi, biện pháp cưỡng chế có thể được áp dụng cho tất cả các tài khoản liên kết.
+  agent: 
+        Instruction: chỉ dùng context; nói rõ khi context không đủ.
+
+        Context: [0] doc_id: tiktok-creator-enforcement-policy::chunk_6::929 Khi nhà sáng tạo vi phạm chính sách hoặc không đáp ứng kỳ vọng về hiệu suất, chúng tôi có thể áp dụng hành động thực thi. [1] doc_id: tiktok-creator-enforcement-policy::chunk_15::938 Những nhà sáng tạo liên tục vi phạm chính sách của chúng tôi sẽ phải chịu các hành động thực thi, bất kể họ có Điểm tình trạng của nhà sáng tạo ở mức nào. [2] doc_id: tiktok-creator-enforcement-policy::chunk_18::941 Nếu một trong những tài khoản này vi phạm các chính sách hoặc tiêu chuẩn cộng đồng của chúng tôi, biện pháp cưỡng chế có thể được áp dụng cho tất cả các tài khoản liên kết. 
+
+        Question: Khi vi phạm chính sách, nền tảng có thể áp dụng những biện pháp nào đối với nhà sáng tạo?
+
+        Answer:
+        Dựa trên context, nền tảng có thể áp dụng "hành động thực thi" (enforcement actions) hoặc "biện pháp cưỡng chế" đối với nhà sáng tạo vi phạm chính sách. Tuy nhiên, context không cung cấp thông tin chi tiết về các biện pháp cụ thể (ví dụ: cảnh cáo, tạm khóa tài khoản, xóa nội dung, v.v.).
+
+Q5 [Ngoại lệ] filter={}: Đơn có nhiều sản phẩm và dùng voucher miễn phí vận chuyển có được hủy một phần không?
+  top-1 score=0.7811 doc_id=tiktok-cancellation-returns-refunds preview=Đối với các đơn hàng có nhiều hơn một sản phẩm và sử dụng Voucher miễn phí vận chuyển, khách hàng không được yêu cầu hủy một phần đơn hàng, tức là chỉ hủy một số sản phẩm trong đơn
+  top-2 score=0.7529 doc_id=tiktok-cancellation-returns-refunds preview=3.2.1 Đơn hàng sử dụng voucher miễn phí vận chuyển và có nhiều hơn 1 sản phẩm
+  top-3 score=0.7529 doc_id=tiktok-cancellation-returns-refunds preview=3.2.1 Đơn hàng sử dụng voucher miễn phí vận chuyển và có nhiều hơn 1 sản phẩm
+  agent: 
+        Instruction: chỉ dùng context; nói rõ khi context không đủ.
+
+        Context: [0] doc_id: tiktok-cancellation-returns-refunds::chunk_30::760 Đối với các đơn hàng có nhiều hơn một sản phẩm và sử dụng Voucher miễn phí vận chuyển, khách hàng không được yêu cầu hủy một phần đơn hàng, tức là chỉ hủy một số sản phẩm trong đơn hàng đó. [1] doc_id: tiktok-cancellation-returns-refunds::chunk_177::907 3.2.1 Đơn hàng sử dụng voucher miễn phí vận chuyển và có nhiều hơn 1 sản phẩm [2] doc_id: tiktok-cancellation-returns-refunds::chunk_29::759 3.2.1 Đơn hàng sử dụng voucher miễn phí vận chuyển và có nhiều hơn 1 sản phẩm 
+
+        Question: Đơn có nhiều sản phẩm và dùng voucher miễn phí vận chuyển có được hủy một phần không?
+
+        Answer:
+        Theo thông tin trong context, đối với các đơn hàng có nhiều hơn một sản phẩm và sử dụng Voucher miễn phí vận chuyển, khách hàng **không được** yêu cầu hủy một phần đơn hàng (chỉ hủy một số sản phẩm).
