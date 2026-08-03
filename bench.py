@@ -9,7 +9,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from ingest import build_knowledge_base
 from src.agent import KnowledgeBaseAgent
-from src.chunking import RecursiveChunker
+from src.chunking import DocumentStructuredChunker, FixedSizeChunker, RecursiveChunker
 from src.embeddings import OPENAI_EMBEDDING_MODEL, OpenAIEmbedder
 
 
@@ -45,6 +45,7 @@ def make_openai_llm(model: str, max_tokens: int):
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-dir", default="data/k4_ecommerce_crawled")
+    parser.add_argument("--strategy", choices=("document_structured", "recursive", "fixed"), default="document_structured")
     parser.add_argument("--chunk-size", type=int, default=400)
     parser.add_argument("--output", type=Path, default=Path("bench_results.txt"))
     parser.add_argument("--embedding-model", default=None)
@@ -58,7 +59,12 @@ def main() -> int:
     if not os.getenv("OPENAI_API_KEY"):
         raise SystemExit("OPENAI_API_KEY chưa được cấu hình")
 
-    chunker = RecursiveChunker(chunk_size=args.chunk_size)
+    if args.strategy == "document_structured":
+        chunker = DocumentStructuredChunker(chunk_size=args.chunk_size)
+    elif args.strategy == "fixed":
+        chunker = FixedSizeChunker(chunk_size=args.chunk_size, overlap=min(50, args.chunk_size // 4))
+    else:
+        chunker = RecursiveChunker(chunk_size=args.chunk_size)
     embedding_fn = OpenAIEmbedder(model_name=embedding_model)
     batch_size = 200
     embedding_calls = 0
@@ -89,7 +95,7 @@ def main() -> int:
         print(line)
         output.append(line)
 
-    emit(f"strategy=RecursiveChunker chunk_size={args.chunk_size}")
+    emit(f"strategy={args.strategy} chunk_size={args.chunk_size}")
     emit(f"embedding_model={embedding_model} llm_model={llm_model} max_tokens={max_tokens}")
     emit(f"chunks_loaded={store.get_collection_size()}")
     for index, (kind, question, metadata_filter) in enumerate(QUERIES, start=1):

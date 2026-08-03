@@ -101,6 +101,78 @@ class RecursiveChunker:
         return chunks
 
 
+class DocumentStructuredChunker:
+    """Split Markdown-like documents by headings while preserving section context.
+
+    Each heading starts a semantic section. Sections longer than ``chunk_size``
+    are packed by paragraph (then by words), and the heading is prefixed to
+    every child chunk so later chunks do not lose their document context.
+    """
+
+    HEADING_RE = re.compile(r"(?m)^#{1,6}\s+.+$" )
+
+    def __init__(self, chunk_size: int = 500) -> None:
+        self.chunk_size = max(1, chunk_size)
+
+    def chunk(self, text: str) -> list[str]:
+        if not text or not text.strip():
+            return []
+
+        matches = list(self.HEADING_RE.finditer(text))
+        if not matches:
+            return self._split_body(text.strip(), "")
+
+        sections: list[tuple[str, str]] = []
+        if matches[0].start() > 0:
+            preamble = text[: matches[0].start()].strip()
+            if preamble:
+                sections.append(("", preamble))
+        for index, match in enumerate(matches):
+            heading = match.group(0).strip()
+            end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+            body = text[match.end() : end].strip()
+            sections.append((heading, body))
+
+        chunks: list[str] = []
+        for heading, body in sections:
+            chunks.extend(self._split_body(body, heading))
+        return chunks
+
+    def _split_body(self, body: str, heading: str) -> list[str]:
+        prefix = f"{heading}\n\n" if heading else ""
+        available = self.chunk_size - len(prefix)
+        if available <= 0:
+            return [prefix[: self.chunk_size]]
+        if len(body) <= available:
+            return [prefix + body] if body else ([heading] if heading else [])
+
+        units = [part.strip() for part in re.split(r"\n\s*\n", body) if part.strip()]
+        if not units:
+            units = [body]
+        chunks: list[str] = []
+        current = ""
+        for unit in units:
+            if len(unit) > available:
+                if current:
+                    chunks.append(prefix + current)
+                    current = ""
+                chunks.extend(self._hard_split(unit, prefix, available))
+                continue
+            candidate = f"{current}\n\n{unit}" if current else unit
+            if len(candidate) > available:
+                chunks.append(prefix + current)
+                current = unit
+            else:
+                current = candidate
+        if current:
+            chunks.append(prefix + current)
+        return chunks
+
+    @staticmethod
+    def _hard_split(text: str, prefix: str, available: int) -> list[str]:
+        return [prefix + text[start : start + available] for start in range(0, len(text), available)]
+
+
 def _dot(a: list[float], b: list[float]) -> float:
     return sum(x * y for x, y in zip(a, b))
 
