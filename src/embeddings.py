@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import os
 
 # Multilingual model suitable for the Vietnamese corpora used in this Lab.
 # The local backend remains optional; required checkpoints use MockEmbedder.
@@ -53,7 +54,11 @@ class OpenAIEmbedder:
 
         self.model_name = model_name
         self._backend_name = model_name
-        self.client = OpenAI()
+        client_options = {}
+        base_url = os.getenv("OPENAI_BASE_URL")
+        if base_url:
+            client_options["base_url"] = base_url
+        self.client = OpenAI(**client_options)
 
     def __call__(self, text: str) -> list[float]:
         response = self.client.embeddings.create(model=self.model_name, input=text)

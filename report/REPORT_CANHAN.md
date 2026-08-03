@@ -1,8 +1,8 @@
 # Báo Cáo Cá Nhân — Lab 7: Embedding & Vector Store
 
-**Họ tên:** [Tên sinh viên]
+**Họ tên:** Hoàng Thành Vinh
 **Nhóm:** [Tên nhóm]
-**Ngày:** [Ngày nộp]
+**Ngày:** 03/08/2026
 
 > **Nộp 1 bản / sinh viên.** Phần nhóm (lựa chọn tài liệu, thiết kế chiến lược, bộ câu hỏi đánh giá, demo) nộp chung 1 bản trong `REPORT_NHOM.md`. Chi tiết thang điểm: `docs/SCORING.md`.
 
@@ -15,29 +15,30 @@
 ### Độ tương tự Cosine (Cosine Similarity) (Bài tập 1.1)
 
 **Độ tương tự cosine cao (High cosine similarity) nghĩa là gì?**
-> *Viết 1-2 câu:*
+> 2 câu hỏi có độ tương đồng cao
 
 **Ví dụ có độ tương tự CAO:**
-- Câu A:
-- Câu B:
-- Tại sao tương đồng:
+- Câu A: Tôi thích chó
+- Câu B: Tôi yêu chó
+- Tại sao tương đồng: cùng thể hiện 1 ý nghĩa, chỉ là khác câu từ
 
 **Ví dụ có độ tương tự THẤP:**
-- Câu A:
-- Câu B:
-- Tại sao khác:
+- Câu A: Tôi yêu chó 
+- Câu B: Tôi ghét chó
+- Tại sao khác: Thể hiện 2 ngữ nghĩa hoàn toàn khác nhau
 
 **Tại sao độ tương tự cosine (cosine similarity) được ưu tiên hơn khoảng cách Euclid (Euclidean distance) cho text embeddings?**
-> *Viết 1-2 câu:*
+> vì nó tập trung vào hướng của vector, trong khi Euclidean distance còn bị ảnh hưởng bởi độ lớn của vector.
 
 ### Bài toán tính toán Chunking (Bài tập 1.2)
 
 **Tài liệu 10,000 ký tự, chunk_size=500, overlap=50. Bao nhiêu chunks?**
-> *Trình bày phép tính:*
-> *Đáp án:*
+> [(10000 - 50)/ 450] + 1
+> 23
 
 **Nếu độ chồng chéo (overlap) tăng lên 100, số lượng chunk thay đổi thế nào? Tại sao muốn độ chồng chéo nhiều hơn?**
-> *Viết 1-2 câu:*
+> Bước dịch giữa hai chunk: 500−100=400 Số chunk: N=[(10000−100) / 400] + 1 = 25.
+Overlap giúp giữ lại ngữ cảnh tại ranh giới giữa các chunk. Overlap càng lớn thì ngữ cảnh được bảo toàn tốt hơn.
 
 ---
 
@@ -75,10 +76,19 @@ Vượt qua bộ kiểm thử là điều kiện tính điểm phần này.
 ### Kết Quả Kiểm Thử (Test Results)
 
 ```
-# Dán kết quả (output) của: pytest tests/ -v
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- .venv/bin/python3
+cachedir: .pytest_cache
+rootdir: .
+plugins: anyio-4.14.2
+collecting ... collected 42 items
+
+tests/test_solution.py ..........................................        [100%]
+
+============================== 42 passed in 0.04s ==============================
 ```
 
-**Số lượng bài test vượt qua (pass):** __ / 42
+**Số lượng bài test vượt qua (pass):** 42 / 42
 
 ---
 
