@@ -48,19 +48,13 @@
 
 ### Phân tích đường cơ sở (Baseline Analysis)
 
-Chạy `ChunkingStrategyComparator().compare()` với `chunk_size=200` trên 3 tài liệu TikTok. Front matter đã được loại bằng `ingest.load_documents()` trước khi so sánh.
+Chạy `ChunkingStrategyComparator().compare()` trên 2-3 tài liệu:
 
 | Tài liệu | Chiến lược (Strategy) | Số lượng Chunk | Độ dài trung bình | Giữ được ngữ cảnh không? |
 |-----------|----------|-------------|------------|-------------------|
-| `tiktok-cancellation-returns-refunds` | FixedSizeChunker (`fixed_size`) | 117 | 198.76 | Tương đối; có thể cắt giữa mục |
-| `tiktok-cancellation-returns-refunds` | SentenceChunker (`by_sentences`) | 41 | 422.95 | Tốt theo câu nhưng vượt ngưỡng 200 |
-| `tiktok-cancellation-returns-refunds` | RecursiveChunker (`recursive`) | 561 | 29.81 | Kém; quá nhiều mảnh ngắn |
-| `tiktok-creator-enforcement-policy` | FixedSizeChunker (`fixed_size`) | 60 | 199.62 | Tương đối; có thể cắt giữa mục |
-| `tiktok-creator-enforcement-policy` | SentenceChunker (`by_sentences`) | 20 | 448.35 | Tốt theo câu nhưng vượt ngưỡng 200 |
-| `tiktok-creator-enforcement-policy` | RecursiveChunker (`recursive`) | 289 | 29.93 | Kém; quá nhiều mảnh ngắn |
-| `tiktok-prohibited-products` | FixedSizeChunker (`fixed_size`) | 172 | 199.95 | Tương đối; có thể cắt giữa mục |
-| `tiktok-prohibited-products` | SentenceChunker (`by_sentences`) | 34 | 757.29 | Giữ câu nhưng quá dài cho retrieval |
-| `tiktok-prohibited-products` | RecursiveChunker (`recursive`) | 698 | 35.56 | Kém; quá nhiều mảnh ngắn |
+| | FixedSizeChunker (`fixed_size`) | | | |
+| | SentenceChunker (`by_sentences`) | | | |
+| | RecursiveChunker (`recursive`) | | | |
 
 ### Chiến lược của từng thành viên
 
@@ -119,57 +113,14 @@ Chạy `ChunkingStrategyComparator().compare()` với `chunk_size=200` trên 3 t
 
 | # | Câu hỏi | Chiến lược tốt nhất cho câu này | Có chunk liên quan trong top-3? | Ghi chú |
 |---|---------|-------------------------------|-------------------------------|---------|
-| 1 | Khách hàng có bao nhiêu ngày để gửi yêu cầu trả hàng/hoàn tiền? | DocumentStructuredChunker (400) | Có | Top-3 chứa mục 4.1; agent trả lời đúng thời hạn **15 ngày**. |
-| 2 | Nhà bán hàng có thể hủy đơn đến thời điểm nào? | DocumentStructuredChunker (400) | Chưa | Lần chạy mới top-3 bị các chunk logistics và phần mở đầu cạnh tranh; agent báo context không đủ. |
-| 3 | Nếu yêu cầu trả hàng bị từ chối thì làm gì? | DocumentStructuredChunker (400) | Có | Top-1 chứa đúng thời hạn **48 giờ**; agent trả lời đúng. |
-| 4 | Khi vi phạm, creator có thể bị xử lý thế nào? | DocumentStructuredChunker (400) + filter `customer_role=creator` | Có một phần | Top-3 chứa hai biện pháp; agent trả lời đúng một phần danh sách. |
-| 5 | Đơn nhiều sản phẩm + voucher có được hủy một phần không? | DocumentStructuredChunker (400) | Có | Top-1 và agent trả lời đúng: không được hủy một phần. |
-
-Kết quả mới nhất được lưu tại [`bench_results_document_structured.txt`](../bench_results_document_structured.txt). DocumentStructuredChunker với `chunk_size=400` tạo **669 chunks**; có bằng chứng đầy đủ trong top-3 cho Q1, Q3 và Q5, bằng chứng một phần cho Q4, còn Q2 thất bại. Agent đạt đầy đủ **3/5 query**, Q4 trả lời một phần.
+| 1 | | | | |
+| 2 | | | | |
+| 3 | | | | |
+| 4 | | | | |
+| 5 | | | | |
 
 **Lọc bằng metadata có giúp ích không? Ở câu hỏi nào?**
-> Query 4 dùng `customer_role=creator`, nhờ đó top-3 chỉ lấy từ tài liệu dành cho nhà sáng tạo. Filter xác định đúng tài liệu, nhưng cần tăng độ đầy đủ của chunk/hoặc top-k để agent liệt kê hết các biện pháp.
-
-### So sánh A/B giữa hai strategy và kiểm tra bằng chứng ở mức chunk
-
-Hai file [`bench_results_recursive.txt`](../bench_results_recursive.txt) và [`bench_results_document_structured.txt`](../bench_results_document_structured.txt) dùng cùng corpus, 5 query, embedding thật `openrouter/openai/text-embedding-3-small` và LLM `openrouter/deepseek/deepseek-v4-flash`; chỉ thay chunker.
-
-#### Kết quả riêng — RecursiveChunker (`chunk_size=400`)
-
-| Query | Top-3 chunk và score | Có chuỗi bằng chứng? | Agent | Điểm |
-|---|---|---|---|---:|
-| Q1 | `chunk_48` (0.8147), `chunk_50` (0.7362), `chunk_126` (0.7246) | Có — `15 ngày` ở top-1 | Trả lời đúng 15 ngày | 2/2 |
-| Q2 | `chunk_1` (0.7575), `chunk_2` (0.7575), `chunk_0` (0.7245) | Không — chỉ có tiêu đề chính sách | Báo context không đủ | 0/2 |
-| Q3 | `chunk_49` (0.8339), `chunk_63` (0.7789), `chunk_65` (0.7733) | Có — `48 giờ` ở top-1 | Trả lời đúng quy trình | 2/2 |
-| Q4, filter `customer_role=creator` | `chunk_1` (0.5523), `chunk_2` (0.5523), `chunk_6` (0.5475) | Không — không có tên biện pháp | Không nêu được biện pháp cụ thể | 0/2 |
-| Q5 | `chunk_27` (0.7932), `chunk_138` (0.7529), `chunk_26` (0.7529) | Có — `không được yêu cầu hủy một phần` | Trả lời đúng ngoại lệ | 2/2 |
-| **Tổng** | **6.973 chunks** | **3/5 query có bằng chứng** | | **6/10** |
-
-#### Kết quả riêng — DocumentStructuredChunker (`chunk_size=400`)
-
-| Query | Top-3 chunk và score | Có chuỗi bằng chứng? | Agent | Điểm |
-|---|---|---|---|---:|
-| Q1 | `chunk_23` (0.7775), `chunk_25` (0.7139), `chunk_32` (0.7056) | Có — `15 ngày` trong chunk 23 | Trả lời đúng 15 ngày | 2/2 |
-| Q2 | `tiktok-logistics-terms::chunk_41` (0.7316), `chunk_13` (0.7146), `tiktok-cancellation-returns-refunds::chunk_4` (0.7091) | Không — không có điều kiện hủy | Báo context không đủ | 0/2 |
-| Q3 | `chunk_24` (0.7997), `chunk_36` (0.7631), `chunk_34` (0.7153) | Có — `48 giờ` trong chunk 24 | Trả lời đúng quy trình | 2/2 |
-| Q4, filter `customer_role=creator` | `chunk_4` (0.6596), `chunk_17` (0.5804), `chunk_10` (0.5716) | Có một phần — hai biện pháp cụ thể | Trả lời đúng một phần danh sách | 1/2 |
-| Q5 | `chunk_14` (0.7818), `chunk_11` (0.7760), `chunk_13` (0.7719) | Có — `không được yêu cầu hủy một phần` trong chunk 11 | Trả lời đúng ngoại lệ | 2/2 |
-| **Tổng** | **669 chunks** | **Q1, Q3, Q5 đầy đủ; Q4 một phần** | | **7/10** |
-
-| Query | RecursiveChunker (6.973 chunks) | DocumentStructuredChunker (638 chunks) | Bằng chứng đặc trưng cần có trong top-3 |
-|---|---|---|---|
-| Q1 | 2/2 — top-1 có “trong vòng 15 ngày”, agent đúng | 2/2 — chunk 23 có “trong vòng 15 ngày”, agent đúng | `15 ngày` |
-| Q2 | 0/2 — ba chunk chỉ là tiêu đề, agent báo thiếu context | 0/2 — top-3 là logistics/mở đầu, không có điều kiện hủy | `trước khi đơn hàng chuyển sang trạng thái` |
-| Q3 | 2/2 — chunk 49 có “48 giờ”, agent đúng | 2/2 — chunk 24 có “48 giờ”, agent đúng | `lần thứ hai trong vòng 48 giờ` |
-| Q4 (filter creator) | 0/2 — filter đúng doc nhưng top-3 không có biện pháp cụ thể | 1/2 — top-3 có “Hạn chế quyền truy cập” và “Tạm ngưng tính năng kiếm tiền”, agent mới trả lời một phần | `Hạn chế quyền truy cập`, `Tạm ngưng tính năng kiếm tiền` |
-| Q5 | 2/2 — chunk 27 có “không được yêu cầu hủy một phần”, agent đúng | 2/2 — chunk 11 có cùng bằng chứng, agent đúng | `không được yêu cầu hủy một phần` |
-| **Tổng** | **6/10** | **7/10** | |
-
-**Failure case 1 — Q2:** RecursiveChunker top-3 có cùng `doc_id` nhưng chỉ chứa tiêu đề “Chính sách hủy đơn hàng...” (score 0.7575, 0.7575, 0.7245). Sau khi nhận diện thêm heading dạng đánh số, DocumentStructuredChunker vẫn bị các chunk logistics/mở đầu cạnh tranh (0.7316, 0.7146, 0.7091), nên không lấy được section 3.1. Đây là lỗi precision ở mức chunk: đúng chủ đề nhưng sai section.
-
-**Failure case 2 — Q4 với DocumentStructuredChunker:** filter `customer_role=creator` giảm nhiễu đúng đối tượng, nhưng top-3 chỉ chứa hai biện pháp và agent không liệt kê toàn bộ danh sách gold. Filter cải thiện precision tài liệu nhưng không bảo đảm recall của mọi chunk trong section “Hành động thực thi”.
-
-**A/B filter:** Hai file hiện có kết quả Q4 ở nhánh **có filter**. Nhánh không filter chưa được ghi riêng trong output, vì vậy không kết luận rằng filter làm thay đổi thứ hạng; cần chạy lại Q4 với `metadata_filter=None` và giữ nguyên strategy/embedder để hoàn tất phép A/B.
+> *Viết 2-3 câu:*
 
 ---
 

@@ -8,6 +8,12 @@ from collections.abc import Callable, Sequence
 class FixedSizeChunker:
     """
     Split text into fixed-size chunks with optional overlap.
+
+    Rules:
+        - Each chunk is at most chunk_size characters long.
+        - Consecutive chunks share overlap characters.
+        - The last chunk contains whatever remains.
+        - If text is shorter than chunk_size, return [text].
     """
 
     def __init__(self, chunk_size: int = 500, overlap: int = 50) -> None:
@@ -33,13 +39,16 @@ class FixedSizeChunker:
 class SentenceChunker:
     """
     Split text into chunks of at most max_sentences_per_chunk sentences.
+
+    Sentence detection: split on ". ", "! ", "? " or ".\n".
+    Strip extra whitespace from each chunk.
     """
 
     def __init__(self, max_sentences_per_chunk: int = 3) -> None:
         self.max_sentences_per_chunk = max(1, max_sentences_per_chunk)
 
     def chunk(self, text: str) -> list[str]:
-        sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", text) if s.strip()]
+        sentences = [sentence.strip() for sentence in re.split(r"(?<=[.!?])\s+", text) if sentence.strip()]
         return [
             " ".join(sentences[index : index + self.max_sentences_per_chunk])
             for index in range(0, len(sentences), self.max_sentences_per_chunk)
@@ -49,6 +58,9 @@ class SentenceChunker:
 class RecursiveChunker:
     """
     Recursively split text using separators in priority order.
+
+    Default separator priority:
+        ["\n\n", "\n", ". ", " ", ""]
     """
 
     DEFAULT_SEPARATORS = ["\n\n", "\n", ". ", " ", ""]
@@ -88,62 +100,6 @@ class RecursiveChunker:
                 chunks.append(part)
             else:
                 chunks.extend(self._split(part, next_separators))
-        return chunks
-
-
-class SemanticChunker:
-    """Group neighbouring sentences while they remain semantically similar."""
-
-    def __init__(
-        self,
-        embedding_function: Callable[[str], Sequence[float]] | None = None,
-        similarity_threshold: float = 0.55,
-        max_chunk_size: int = 500,
-    ) -> None:
-        if max_chunk_size < 1:
-            raise ValueError("max_chunk_size must be positive")
-        self.embedding_function = embedding_function
-        self.similarity_threshold = similarity_threshold
-        self.max_chunk_size = max_chunk_size
-
-    @staticmethod
-    def _fallback_embedding(text: str) -> list[float]:
-        tokens = re.findall(r"\w+", text.lower(), flags=re.UNICODE)
-        counts: dict[str, float] = {}
-        for token in tokens:
-            counts[token] = counts.get(token, 0.0) + 1.0
-        return [counts[key] for key in sorted(counts)]
-
-    def _embed(self, text: str) -> Sequence[float]:
-        return self.embedding_function(text) if self.embedding_function else self._fallback_embedding(text)
-
-    def _similarity(self, left: str, right: str) -> float:
-        if self.embedding_function is not None:
-            return compute_similarity(list(self._embed(left)), list(self._embed(right)))
-        left_tokens = set(re.findall(r"\w+", left.lower(), flags=re.UNICODE))
-        right_tokens = set(re.findall(r"\w+", right.lower(), flags=re.UNICODE))
-        if not left_tokens or not right_tokens:
-            return 0.0
-        return len(left_tokens & right_tokens) / len(left_tokens | right_tokens)
-
-    def chunk(self, text: str) -> list[str]:
-        if not text or not text.strip():
-            return []
-
-        sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+|\n+", text) if s.strip()]
-        if not sentences:
-            return []
-
-        chunks: list[str] = []
-        current = sentences[0]
-        for sentence in sentences[1:]:
-            candidate = f"{current} {sentence}"
-            if len(candidate) <= self.max_chunk_size and self._similarity(current, sentence) >= self.similarity_threshold:
-                current = candidate
-            else:
-                chunks.append(current)
-                current = sentence
-        chunks.append(current)
         return chunks
 
 
@@ -219,9 +175,75 @@ class DocumentStructuredChunker:
         return [prefix + text[start : start + available] for start in range(0, len(text), available)]
 
 
+class SemanticChunker:
+    """Group neighbouring sentences while they remain semantically similar."""
+
+    def __init__(
+        self,
+        embedding_function: Callable[[str], Sequence[float]] | None = None,
+        similarity_threshold: float = 0.55,
+        max_chunk_size: int = 500,
+    ) -> None:
+        if max_chunk_size < 1:
+            raise ValueError("max_chunk_size must be positive")
+        self.embedding_function = embedding_function
+        self.similarity_threshold = similarity_threshold
+        self.max_chunk_size = max_chunk_size
+
+    @staticmethod
+    def _fallback_embedding(text: str) -> list[float]:
+        tokens = re.findall(r"\w+", text.lower(), flags=re.UNICODE)
+        counts: dict[str, float] = {}
+        for token in tokens:
+            counts[token] = counts.get(token, 0.0) + 1.0
+        return [counts[key] for key in sorted(counts)]
+
+    def _embed(self, text: str) -> Sequence[float]:
+        return self.embedding_function(text) if self.embedding_function else self._fallback_embedding(text)
+
+    def _similarity(self, left: str, right: str) -> float:
+        if self.embedding_function is not None:
+            return compute_similarity(list(self._embed(left)), list(self._embed(right)))
+
+        left_tokens = set(re.findall(r"\w+", left.lower(), flags=re.UNICODE))
+        right_tokens = set(re.findall(r"\w+", right.lower(), flags=re.UNICODE))
+        if not left_tokens or not right_tokens:
+            return 0.0
+        return len(left_tokens & right_tokens) / len(left_tokens | right_tokens)
+
+    def chunk(self, text: str) -> list[str]:
+        if not text or not text.strip():
+            return []
+
+        sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+|\n+", text) if s.strip()]
+        if not sentences:
+            return []
+
+        chunks: list[str] = []
+        current = sentences[0]
+        for sentence in sentences[1:]:
+            candidate = f"{current} {sentence}"
+            similarity = self._similarity(current, sentence)
+            if len(candidate) <= self.max_chunk_size and similarity >= self.similarity_threshold:
+                current = candidate
+            else:
+                chunks.append(current)
+                current = sentence
+        chunks.append(current)
+        return chunks
+
+
 class ParentChildChunker:
     """
     Split text into large parent chunks, then split each parent into smaller child chunks.
+
+    Rules:
+        - Text is first split into parent chunks via RecursiveChunker(chunk_size=parent_chunk_size).
+        - Each parent is then split into child chunks via FixedSizeChunker(chunk_size=child_chunk_size, overlap=child_overlap).
+        - Each child keeps a reference to its parent (parent_id, parent_text) so retrieval can
+          search over the smaller, more precise children while returning the fuller parent
+          context for generation.
+        - Returns [] for empty text.
     """
 
     def __init__(
@@ -261,6 +283,13 @@ def _dot(a: list[float], b: list[float]) -> float:
 
 
 def compute_similarity(vec_a: list[float], vec_b: list[float]) -> float:
+    """
+    Compute cosine similarity between two vectors.
+
+    cosine_similarity = dot(a, b) / (||a|| * ||b||)
+
+    Returns 0.0 if either vector has zero magnitude.
+    """
     dot = _dot(vec_a, vec_b)
     norm_a_sq = math.sqrt(_dot(vec_a, vec_a))
     norm_b_sq = math.sqrt(_dot(vec_b, vec_b))
